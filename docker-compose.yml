@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: geo_measure_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - DATABASE_URL=postgresql://geo_user:geo_pass@postgres:5432/geo_measure
+      - PROCESSING_MODE=background
+      - MAX_UPLOAD_MB=50
+      - MAX_ZIP_UNCOMPRESSED_MB=250
+      - MAX_ZIP_MEMBERS=1000
+      - ASSUME_WGS84_IF_MISSING=true
+      - UPLOAD_DIR=/app/uploads
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: geo_measure_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: geo_user
+      POSTGRES_PASSWORD: geo_pass
+      POSTGRES_DB: geo_measure
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U geo_user -d geo_measure"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  uploads_data:

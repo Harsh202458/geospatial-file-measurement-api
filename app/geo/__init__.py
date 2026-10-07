@@ -1,0 +1,1 @@
+"""Pure geospatial domain logic."""
